@@ -8,13 +8,10 @@ import segmentation_models_pytorch as smp
 from albumentations.pytorch.transforms import ToTensorV2
 
 def main():
-    # Tạo đối tượng ArgumentParser
     parser = argparse.ArgumentParser(description="Process an image file.")
 
-    # Thêm tham số image_path
     parser.add_argument('--image_path', type=str, required=True, help='Path to the image file')
 
-    # Parse các tham số
     args = parser.parse_args()
 
     # Lấy giá trị của image_path
@@ -27,9 +24,10 @@ def main():
             encoder_weights="imagenet",     
             in_channels=3,                  
             classes=3)
-
-        checkpoint = torch.load('/kaggle/working/model.pth')
-        model.load_state_dict(checkpoint['model'])
+        model_path = os.getcwd()
+        model_path = os.path.join(model_path, "model.pth")
+        checkpoint = torch.load(model_path)
+        model.load_state_dict(checkpoint)
 
         val_transform = A.Compose([
             A.Normalize(mean=(0.485, 0.456, 0.406),std=(0.229, 0.224, 0.225)),
@@ -48,8 +46,10 @@ def main():
             return np.uint8(output)
 
         DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(DEVICE)
 
-        model.eval()
+        model.to(DEVICE)
+        model.eval()    
         dir_path = os.getcwd()
 
         img_path = os.path.join(dir_path, image)
@@ -67,7 +67,7 @@ def main():
         mask = np.argmax(mask, axis=2)
         mask_rgb = mask_to_rgb(mask, color_dict)
         mask_rgb = cv2.cvtColor(mask_rgb, cv2.COLOR_RGB2BGR)
-        cv2.imwrite("{}output".format(image), mask_rgb)
+        cv2.imwrite("prediction_result/{}".format(image), mask_rgb)
 
     infer(image_path)
 
